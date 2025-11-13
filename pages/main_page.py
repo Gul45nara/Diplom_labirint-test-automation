@@ -20,7 +20,7 @@ class MainPage(BasePage):
         try:
             self.click(self.COOKIE_ACCEPT)
             time.sleep(1)
-        except:
+        except Exception:
             pass
         return self
 
@@ -47,7 +47,7 @@ class MainPage(BasePage):
         try:
             # Пробуем найти и кликнуть кнопку авторизации
             self.click(self.LOGIN_BUTTON)
-        except:
+        except Exception:
             # Если не нашли кнопку, переходим напрямую по URL
             self.driver.get(f"{self.base_url}/login/")
         time.sleep(2)

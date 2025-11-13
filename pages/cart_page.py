@@ -28,5 +28,5 @@ class CartPage(BasePage):
         wait = self.wait if timeout is None else WebDriverWait(self.driver, timeout)
         try:
             return wait.until(EC.presence_of_all_elements_located(locator))
-        except:
+        except Exception:
             return []

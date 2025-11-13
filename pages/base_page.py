@@ -1,6 +1,6 @@
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from config.config import Config
 import allure
@@ -24,10 +24,10 @@ class BasePage:
         return self
 
     @allure.step("Найти элемент {locator}")
-    def find_element(self, locator, timeout=None):
+    def find_element(self, by, value, timeout=None):
         """Найти элемент с ожиданием"""
         wait = self.wait if timeout is None else WebDriverWait(self.driver, timeout)
-        return wait.until(EC.presence_of_element_located(locator))
+        return wait.until(EC.presence_of_element_located((by, value)))
 
     @allure.step("Найти видимый элемент {locator}")
     def find_visible_element(self, locator, timeout=None):

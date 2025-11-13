@@ -22,8 +22,9 @@ class TestLabirintAPI:
 
     @allure.story("Поиск через API")
     @allure.title("Проверка поискового API")
-    def test_search_api(self):
-        """Тест поискового функционала через API"""
+    def test_api_search_books_positive(self):
+        """Положительный тест поиска книг"""
+
         search_url = f"{self.base_url}/search/"
 
         with allure.step("Выполнить поисковый запрос"):
@@ -38,8 +39,10 @@ class TestLabirintAPI:
             assert response.status_code == 200, f"Ожидался статус 200, получен {response.status_code}"
 
         with allure.step("Проверить содержимое ответа"):
-            assert "Гарри Поттер" in response.text, "Результаты поиска не содержат искомый запрос"
-            assert "product" in response.text.lower() or "книг" in response.text, "Не найдены элементы товаров"
+            assert "Гарри Поттер" in response.text, \
+                "Результаты поиска не содержат искомый запрос"
+            assert "product" in response.text.lower() or "книг" in response.text, \
+                "Не найдены элементы товаров"
 
     @allure.story("Доступность страниц")
     @allure.title("Проверка доступности главной страницы")
@@ -65,7 +68,7 @@ class TestLabirintAPI:
     @allure.title("Проверка JSON endpoints")
     def test_json_endpoints(self):
         """Тест JSON endpoints сайта"""
-        # Проверяем доступность API для подсказок поиска
+         # Проверяем доступность API для подсказок поиска
         suggest_url = f"{self.base_url}/search/suggest/"
 
         response = self.session.get(
@@ -75,7 +78,8 @@ class TestLabirintAPI:
         )
 
         # Некоторые endpoints могут возвращать 404 или другие коды - это нормально
-        assert response.status_code in [200, 404, 403], f"Неожиданный статус код: {response.status_code}"
+        assert response.status_code in [200, 404, 403], \
+            f"Неожиданный статус код: {response.status_code}"
 
     @allure.story("Доступность страниц")
     @allure.title("Проверка доступности страницы помощи")
@@ -113,7 +117,8 @@ class TestLabirintAPI:
         response_time = end_time - start_time
 
         assert response.status_code == 200
-        assert response_time < 5.0, f"Время ответа слишком большое: {response_time} секунд"
+        assert response_time < 5.0, \
+            f"Время ответа слишком большое: {response_time} секунд"
 
     @allure.story("Контент")
     @allure.title("Проверка мета-тегов")
@@ -122,7 +127,8 @@ class TestLabirintAPI:
         response = self.session.get(self.base_url, timeout=Config.API_TIMEOUT)
 
         assert '<meta' in response.text, "Мета-теги отсутствуют"
-        assert 'charset=' in response.text or 'utf-8' in response.text.lower(), "Кодировка не указана"
+        assert 'charset=' in response.text or 'utf-8' in response.text.lower(), \
+            "Кодировка не указана"
 
     @allure.story("Безопасность")
     @allure.title("Проверка заголовков безопасности")
@@ -137,7 +143,5 @@ class TestLabirintAPI:
             'Content-Security-Policy'
         ]
 
-        found_headers = [header for header in security_headers if header in response.headers]
-        # Сайт может не иметь всех security headers, это не всегда ошибка
-        # Проверяем хотя бы наличие Content-Type
+         # Проверяем хотя бы наличие Content-Type
         assert 'Content-Type' in response.headers, "Базовые заголовки отсутствуют"

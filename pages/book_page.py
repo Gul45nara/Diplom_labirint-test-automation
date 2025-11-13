@@ -10,9 +10,15 @@ class BookPage(BasePage):
     BOOK_TITLE = (By.CSS_SELECTOR, "h1, .book-title, .product-title")
     BOOK_AUTHOR = (By.CSS_SELECTOR, ".authors, .book-author, .product-author")
     BOOK_PRICE = (By.CSS_SELECTOR, ".buying-price, .price, .product-price")
-    ADD_TO_CART_BUTTON = (By.CSS_SELECTOR, ".btn-buy, .buy-link, [data-toggle='add-to-cart']")
-    CART_SUCCESS_MESSAGE = (By.CSS_SELECTOR, ".basket-popinfo, .cart-success, .added-to-cart")
-    ISBN = (By.XPATH, "//*[contains(text(), 'ISBN')]/following-sibling::* | //*[contains(text(), 'ISBN')]/parent::*")
+    BUY_BUTTON = (By.XPATH,
+        "//a[@class='btn btn-small btn-primary btn-buy']")
+    CART_SUCCESS_ICON = (By.XPATH,
+        "//span[@class='btn btn-small btn-primary btn-buy']")
+    ISBN = (By.XPATH, "//span[contains(@class, 'isbn')]")
+    CART_COUNTER = (By.XPATH,
+        "//span[@class='b-header-b-personal-e-icon-count-m-cart basket-in-cart-a']")
+    ADD_TO_CART_BUTTON = (By.XPATH, "//a[@class='btn btn-small btn-primary btn-buy']")
+    CART_SUCCESS_MESSAGE = (By.XPATH, "//div[contains(@class, 'success-message')]")
 
     @allure.step("Получить информацию о книге")
     def get_book_info(self):
@@ -41,5 +47,5 @@ class BookPage(BasePage):
         """Получить ISBN книги"""
         try:
             return self.get_text(self.ISBN)
-        except:
+        except Exception:
             return "Не найден"

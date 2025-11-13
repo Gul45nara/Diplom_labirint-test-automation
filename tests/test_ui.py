@@ -44,7 +44,8 @@ class TestLabirintUI:
         """Тест успешного поиска книги"""
         self.main_page.open().accept_cookies()
         search_page = self.main_page.search(TestData.SEARCH_QUERIES["valid"])
-        assert search_page.has_results(), "Результаты поиска не найдены"
+        assert search_page.has_results(), \
+            "Результаты поиска не найдены"
 
     @allure.story("Поиск книг")
     @allure.title("Поиск с невалидным запросом")
@@ -88,7 +89,8 @@ class TestLabirintUI:
         self.main_page.open().accept_cookies()
         cart_page = self.main_page.go_to_cart()
         current_url = self.driver.current_url.lower()
-        assert "cart" in current_url, "Не удалось перейти в корзину"
+        assert "cart" in current_url, \
+            "Не удалось перейти в корзину"
 
     @allure.story("Контент страницы")
     @allure.title("Проверка информации о книге")
@@ -118,7 +120,7 @@ class TestLabirintUI:
             # Проверяем что мы на странице авторизации
             current_url = self.driver.current_url.lower()
             assert "login" in current_url or "auth" in current_url or "cabinet" in current_url
-        except:
+        except Exception:
             # Если не удалось через кнопку, проверяем прямой переход
             self.driver.get(f"{Config.BASE_URL}/login/")
             current_url = self.driver.current_url.lower()

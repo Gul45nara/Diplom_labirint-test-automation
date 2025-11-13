@@ -2,6 +2,10 @@ from selenium.webdriver.common.by import By
 from .base_page import BasePage
 import allure
 import time
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .book_page import BookPage
 
 
 class SearchPage(BasePage):
@@ -9,26 +13,39 @@ class SearchPage(BasePage):
 
     # Обновленные локаторы
     SEARCH_RESULTS = (By.CSS_SELECTOR, "div.product-card")
-    BOOK_TITLE = (By.CSS_SELECTOR, "a[data-event-label='book'], .product-title-link")
+    BOOK_TITLE = (By.CSS_SELECTOR,
+                  "a[data-event-label='book'], .product-title-link")
     ADD_TO_CART_BUTTON = (By.CSS_SELECTOR, ".buy-link.btn-tocart")
 
     @allure.step("Получить количество результатов поиска")
-    def get_results_count(self):
-        """Получить количество найденных товаров"""
+    def get_results_count(self) -> int:
+        """Получить количество найденных товаров
+
+        Returns:
+            int: Количество найденных товаров или 0 при ошибке
+        """
         try:
             results = self.find_elements(self.SEARCH_RESULTS, timeout=10)
             return len(results)
-        except:
+        except Exception:
             return 0
 
     @allure.step("Проверить наличие результатов")
-    def has_results(self):
-        """Проверить, есть ли результаты поиска"""
+    def has_results(self) -> bool:
+        """Проверить, есть ли результаты поиска
+
+        Returns:
+            bool: True если есть результаты, иначе False
+        """
         return self.get_results_count() > 0
 
     @allure.step("Получить сообщение об отсутствии результатов")
-    def get_no_results_message(self):
-        """Получить сообщение об отсутствии результатов"""
+    def get_no_results_message(self) -> str:
+        """Получить сообщение об отсутствии результатов
+
+        Returns:
+            str: Текст сообщения или пустая строка
+        """
         page_text = self.driver.page_source.lower()
         if "ничего не найдено" in page_text:
             return "ничего не найдено"
@@ -37,8 +54,15 @@ class SearchPage(BasePage):
         return ""
 
     @allure.step("Открыть книгу по индексу {index}")
-    def open_book_by_index(self, index=0):
-        """Открыть книгу по индексу в результатах"""
+    def open_book_by_index(self, index: int = 0) -> Optional['BookPage']:
+        """Открыть книгу по индексу в результатах поиска
+
+        Args:
+            index: Индекс книги в результатах (по умолчанию 0)
+
+        Returns:
+            Optional[BookPage]: Страница книги или None если не удалось открыть
+        """
         try:
             # Ждем загрузки результатов
             time.sleep(3)
@@ -52,17 +76,21 @@ class SearchPage(BasePage):
                     href = link.get_attribute('href')
                     if href and '/books/' in href:
                         # Прокручиваем и кликаем
-                        self.driver.execute_script("arguments[0].scrollIntoView();", link)
+                        self.driver.execute_script(
+                            "arguments[0].scrollIntoView();", link)
                         time.sleep(1)
                         link.click()
                         time.sleep(3)
+                        # Импорт внутри метода чтобы избежать циклического импорта
                         from .book_page import BookPage
                         return BookPage(self.driver)
 
             # Альтернативный способ - ищем по классу
             book_titles = self.find_elements(self.BOOK_TITLE)
             if book_titles and index < len(book_titles):
-                self.driver.execute_script("arguments[0].scrollIntoView();", book_titles[index])
+                self.driver.execute_script(
+                    "arguments[0].scrollIntoView();",
+                    book_titles[index])
                 time.sleep(1)
                 book_titles[index].click()
                 time.sleep(3)
@@ -71,16 +99,30 @@ class SearchPage(BasePage):
 
         except Exception as e:
             print(f"Ошибка при открытии книги: {e}")
+            allure.attach(
+                self.driver.get_screenshot_as_png(),
+                name="screenshot_on_error",
+                attachment_type=allure.attachment_type.PNG
+            )
 
         return None
 
     def find_elements(self, locator, timeout=None):
-        """Найти все элементы"""
+        """Найти все элементы
+
+        Args:
+            locator: Локатор для поиска
+            timeout: Время ожидания в секундах
+
+        Returns:
+            list: Список найденных элементов или пустой список
+        """
         from selenium.webdriver.support.ui import WebDriverWait
         from selenium.webdriver.support import expected_conditions as EC
 
-        wait = self.wait if timeout is None else WebDriverWait(self.driver, timeout)
+        wait = self.wait if timeout is None else WebDriverWait(
+            self.driver, timeout)
         try:
             return wait.until(EC.presence_of_all_elements_located(locator))
-        except:
+        except Exception:
             return []

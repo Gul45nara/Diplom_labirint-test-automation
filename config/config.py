@@ -8,7 +8,7 @@ class Config:
     """Конфигурация проекта"""
 
     # URL тестового окружения
-    BASE_URL = os.getenv("BASE_URL", "https://www.labirint.ru")  # Значение по умолчанию
+    BASE_URL = "https://www.labirint.ru" # Значение по умолчанию
 
     # Настройки браузера
     BROWSER = os.getenv("BROWSER", "chrome")
