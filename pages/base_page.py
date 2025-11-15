@@ -1,94 +1,96 @@
-from selenium.common.exceptions import TimeoutException
+"""Базовый класс для всех страниц с улучшенной стабильностью."""
+import time
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
-from config.config import Config
-import allure
-import time
+from selenium.common.exceptions import TimeoutException
 
 
 class BasePage:
-    """Базовый класс для всех страниц"""
+    """Базовый класс для всех страниц."""
 
-    def __init__(self, driver):
-        self.driver = driver
-        self.wait = WebDriverWait(driver, Config.TIMEOUT)
-        self.base_url = Config.BASE_URL
-        self.actions = ActionChains(driver)
+    def __init__(self, browser):
+        self.browser = browser
+        self.wait = WebDriverWait(browser, 15)
 
-    @allure.step("Открыть страницу {url}")
     def open(self, url=""):
-        """Открыть указанный URL"""
-        full_url = f"{self.base_url}/{url}" if url else self.base_url
-        self.driver.get(full_url)
-        return self
+        """Открыть указанный URL или базовый URL."""
+        full_url = f"{self.browser.base_url}{url}"
+        print(f"Opening URL: {full_url}")
+        self.browser.get(full_url)
+        time.sleep(2)
 
-    @allure.step("Найти элемент {locator}")
-    def find_element(self, by, value, timeout=None):
-        """Найти элемент с ожиданием"""
-        wait = self.wait if timeout is None else WebDriverWait(self.driver, timeout)
-        return wait.until(EC.presence_of_element_located((by, value)))
+    def find_element(self, locator, timeout=15):
+        """Найти элемент с явным ожиданием и логированием."""
+        print(f"Looking for element: {locator}")
+        wait = WebDriverWait(self.browser, timeout)
+        try:
+            element = wait.until(EC.presence_of_element_located(locator))
+            print(f"Element found: {locator}")
+            return element
+        except TimeoutException:
+            print(f"Element NOT found within {timeout}s: {locator}")
+            raise
 
-    @allure.step("Найти видимый элемент {locator}")
-    def find_visible_element(self, locator, timeout=None):
-        """Найти видимый элемент"""
-        wait = self.wait if timeout is None else WebDriverWait(self.driver, timeout)
-        return wait.until(EC.visibility_of_element_located(locator))
+    def find_elements(self, locator, timeout=15):
+        """Найти несколько элементов с явным ожиданием."""
+        print(f"Looking for multiple elements: {locator}")
+        wait = WebDriverWait(self.browser, timeout)
+        try:
+            elements = wait.until(EC.presence_of_all_elements_located(locator))
+            print(f"Found {len(elements)} elements: {locator}")
+            return elements
+        except TimeoutException:
+            print(f"No elements found within {timeout}s: {locator}")
+            return []
 
-    @allure.step("Кликнуть на элемент {locator}")
-    def click(self, locator):
-        """Кликнуть на элемент"""
-        element = self.find_visible_element(locator)
+    def click_element(self, locator, timeout=15):
+        """Кликнуть на элемент с явным ожиданием кликабельности."""
+        print(f"Clicking element: {locator}")
+        wait = WebDriverWait(self.browser, timeout)
+        element = wait.until(EC.element_to_be_clickable(locator))
         element.click()
-        return self
+        print(f"Element clicked: {locator}")
 
-    @allure.step("Ввести текст '{text}' в поле {locator}")
-    def type_text(self, locator, text):
-        """Ввести текст в поле"""
-        element = self.find_visible_element(locator)
+    def input_text(self, locator, text, timeout=15):
+        """Ввести текст в поле с явным ожиданием."""
+        print(f"Inputting text '{text}' to: {locator}")
+        element = self.find_element(locator, timeout)
         element.clear()
         element.send_keys(text)
-        return self
+        print(f"Text input completed: {locator}")
 
-    @allure.step("Получить текст элемента {locator}")
-    def get_text(self, locator):
-        """Получить текст элемента"""
-        return self.find_visible_element(locator).text
+    def get_text(self, locator, timeout=15):
+        """Получить текст из элемента с явным ожиданием."""
+        element = self.find_element(locator, timeout)
+        text = element.text
+        print(f"Got text '{text}' from: {locator}")
+        return text
 
-    @allure.step("Проверить видимость элемента {locator}")
-    def is_visible(self, locator, timeout=None):
-        """Проверить видимость элемента"""
-        try:
-            return self.find_visible_element(locator, timeout).is_displayed()
-        except TimeoutException:
-            return False
+    def wait_for_url_contains(self, text, timeout=15):
+        """Ожидать, что URL содержит указанный текст."""
+        print(f"Waiting for URL to contain: {text}")
+        wait = WebDriverWait(self.browser, timeout)
+        return wait.until(EC.url_contains(text))
 
-    @allure.step("Проверить наличие элемента {locator}")
-    def is_element_present(self, locator, timeout=None):
-        """Проверить наличие элемента"""
+    def is_element_present(self, locator, timeout=5):
+        """Проверить, присутствует ли элемент на странице."""
         try:
             self.find_element(locator, timeout)
             return True
         except TimeoutException:
             return False
 
-    @allure.step("Получить текущий URL")
     def get_current_url(self):
-        """Получить текущий URL"""
-        return self.driver.current_url
+        """Получить текущий URL."""
+        url = self.browser.current_url
+        print(f"Current URL: {url}")
+        return url
 
-    @allure.step("Переключиться на новую вкладку")
-    def switch_to_new_tab(self):
-        """Переключиться на новую вкладку"""
-        handles = self.driver.window_handles
-        if len(handles) > 1:
-            self.driver.switch_to.window(handles[-1])
-        return self
-
-    @allure.step("Закрыть текущую вкладку и вернуться к основной")
-    def close_tab_and_return(self):
-        """Закрыть текущую вкладку и вернуться к основной"""
-        if len(self.driver.window_handles) > 1:
-            self.driver.close()
-            self.driver.switch_to.window(self.driver.window_handles[0])
-        return self
+    def safe_click(self, locator, timeout=10):
+        """Безопасный клик с обработкой исключений."""
+        try:
+            self.click_element(locator, timeout)
+            return True
+        except Exception as e:
+            print(f"Safe click failed: {e}")
+            return False

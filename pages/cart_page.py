@@ -1,32 +1,41 @@
-from selenium.webdriver.common.by import By
+"""Класс для страницы корзины."""
 from .base_page import BasePage
-import allure
+from selenium.webdriver.common.by import By
 
 
 class CartPage(BasePage):
-    """Страница корзины"""
+    """Класс для страницы корзины."""
 
-    # Обновленные локаторы
-    CART_TITLE = (By.CSS_SELECTOR, "h1, .cart-title, .basket-title")
-    CART_ITEMS = (By.CSS_SELECTOR, ".cart-item, .basket-item, .cart-product")
-    EMPTY_CART_MESSAGE = (By.CSS_SELECTOR, ".cart-empty, .basket-empty, .empty-cart")
-    CART_CONTENT = (By.CSS_SELECTOR, ".cart-content, .basket-content")
+    # Локаторы для корзины
+    CART_ITEMS = (By.CSS_SELECTOR, ".cart-item, .basket-item")
+    ITEM_TITLE = (By.CSS_SELECTOR, ".product-title, .item-title")
+    ITEM_PRICE = (By.CSS_SELECTOR, ".price-value, .item-price")
+    ITEM_QUANTITY = (By.CSS_SELECTOR, ".quantity-input, [name*='quantity']")
+    REMOVE_BUTTON = (By.CSS_SELECTOR, ".btn-remove, .remove-item")
+    TOTAL_PRICE = (By.CSS_SELECTOR, ".basket-summary, .total-price")
+    CHECKOUT_BUTTON = (By.CSS_SELECTOR, ".btn-checkout, .checkout-btn")
 
     def get_cart_items_count(self):
-        """Получить количество товаров в корзине"""
-        return len(self.find_elements(self.CART_ITEMS))
+        """Получить количество товаров в корзине."""
+        items = self.find_elements(self.CART_ITEMS)
+        return len(items)
 
-    def is_cart_empty(self):
-        """Проверить, пуста ли корзина"""
-        return self.is_visible(self.EMPTY_CART_MESSAGE) or self.get_cart_items_count() == 0
+    def get_item_titles(self):
+        """Получить названия всех товаров в корзине."""
+        titles = []
+        items = self.find_elements(self.ITEM_TITLE)
+        for item in items:
+            titles.append(item.text)
+        return titles
 
-    def find_elements(self, locator, timeout=None):
-        """Найти все элементы"""
-        from selenium.webdriver.support.ui import WebDriverWait
-        from selenium.webdriver.support import expected_conditions as EC
+    def remove_first_item(self):
+        """Удалить первый товар из корзины."""
+        return self.safe_click(self.REMOVE_BUTTON)
 
-        wait = self.wait if timeout is None else WebDriverWait(self.driver, timeout)
-        try:
-            return wait.until(EC.presence_of_all_elements_located(locator))
-        except Exception:
-            return []
+    def get_total_price(self):
+        """Получить общую стоимость."""
+        return self.get_text(self.TOTAL_PRICE)
+
+    def proceed_to_checkout(self):
+        """Перейти к оформлению заказа."""
+        return self.safe_click(self.CHECKOUT_BUTTON)
